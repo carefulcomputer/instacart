@@ -1,2 +1,3 @@
 # instacart
-instacart and coscto sameday scraper
+
+Check for open time slots on instacart and costco.

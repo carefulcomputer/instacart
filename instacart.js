@@ -1,8 +1,4 @@
 const puppeteer = require('puppeteer');
-const axios = require('axios').default;
-const qs = require('qs');
-
-
 
 const checkDateAvailability = async (storeName, user, pass, zip) => {
 
@@ -14,36 +10,53 @@ const checkDateAvailability = async (storeName, user, pass, zip) => {
     pass = pass || myArgs[2];
     zip = zip || myArgs[3];
 
-
     const profileName = storeName + '-' + user.substring(0, 4) + '-' + zip;
+
+    const puppeteerArgs = [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-infobars',
+        '--window-position=0,0',
+        '--ignore-certifcate-errors',
+        '--ignore-certifcate-errors-spki-list',
+        '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"'
+    ];
 
     const browser = await puppeteer.launch({
         headless: true,
         userDataDir: profileName,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        ignoreDefaultArgs: ['--enable-automation'],
+        args: puppeteerArgs,
         slowMo: 50,
     });
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36')
 
-    await page.setViewport({ width: 1650, height: 800 });
+    //await page.setViewport({ width: 1650, height: 800 });
+    await page.setViewport({ width: 1366, height: 1024 });
 
 
     try {
         await page.goto('https://www.instacart.com/store/' + storeName + '/storefront'), { waitUntil: 'networkidle2' };
 
+        await page.waitFor(3000);
         const timeSelector = 'a[href^="/' + storeName + '/info?tab=delivery"]>span';
         const zipSelector = '#address_line_1';
 
         const navigationOutcome = await checkAnySelector(page, [zipSelector, timeSelector]);
-        //console.log('navigation found ' + navigationOutcome);
 
         switch (navigationOutcome) {
             case zipSelector:
                 await login(page, user, pass, zip);
+                // check if logged in.
+                let checkIfLoggedIn = await checkAnySelector(page, [zipSelector, timeSelector]);
+                if (checkIfLoggedIn == zipSelector) {
+                    await login(page, user, pass, zip);
+                }
             // fall through after login
             case timeSelector:
                 // check date 
+                await page.goto('https://www.instacart.com/store/' + storeName + '/storefront'), { waitUntil: 'networkidle2' };
                 await page.waitForSelector(timeSelector, { visible: true, timeout: 15000 });
                 const deliveryText = await page.evaluate((storeName, timeSelector) => document.querySelector(timeSelector).textContent, storeName, timeSelector);
                 console.log('TimeFound : ' + deliveryText + ' - ' + storeName);
@@ -56,8 +69,8 @@ const checkDateAvailability = async (storeName, user, pass, zip) => {
         //
 
     } catch (error) {
-        console.log('Error: main - ' + error);
-        await page.screenshot({ path: '/tmp/' + profileName + '-' + new Date().getTime() });
+        console.log('Error: main - ' + profileName + '  : ' + error);
+        await page.screenshot({ path: '/tmp/' + profileName + '-' + (new Date().getTime())  + '.png'});
     }
     try {
         await page.close();
@@ -73,7 +86,9 @@ async function login(page, username, password, zip) {
     await enterText(page, zipcodeSelector, zip + String.fromCharCode(13));
     await clickByText(page, 'Log in', 'span'); // login link    
     await enterText(page, 'input[name="nextgen-authenticate.all.log_in_email"][type="email"]', username); // user field
+    await page.waitFor(2000);
     await enterText(page, 'input[name="nextgen-authenticate.all.log_in_password"][type="password"]', password); // password field
+    await page.waitFor(2000);
     await clickLinkOrButton(page, '#main-content > div.rmq-766c96d2 > form > div:nth-child(6) > button');
 }
 
@@ -85,7 +100,7 @@ const checkAnySelector = async (page, selectors) => {
             }
         }
         return false;
-    }, { visible: true, timeout: 10000 }, selectors);
+    }, { visible: true, timeout: 15000 }, selectors);
 
     const selector = await jsHandle.jsonValue();
     return selector;
@@ -148,9 +163,11 @@ async function clickLinkOrButton(frame, selector) {
 }
 
 async function enterText(page, selector, textToEnter) {
+    //console.log('text to enter: ' + textToEnter );
     await page.waitForSelector(selector, { visible: true, timeout: 10000 })
     const textBox = await page.$(selector);
     await textBox.focus();
+    //await page.evaluate((val, selector) => document.querySelector(selector).value = val, textToEnter, selector);
     await page.keyboard.type(textToEnter);
 }
 

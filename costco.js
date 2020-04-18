@@ -38,9 +38,7 @@ const checkCostcoAvailability = async (user, pass, zip) => {
             // fall through after login
             case timeSelector:
                 // check date 
-                await page.waitForSelector(timeSelector, { visible: true, timeout: 15000 });
-                const deliveryText = await page.evaluate((timeSelector) => document.querySelector(timeSelector).textContent, timeSelector);
-                console.log('TimeFound : ' + deliveryText + ' - ' + storeName);
+                checkTime(page, timeSelector);
                 break;
             default:
                 console.log('Error');
@@ -49,7 +47,7 @@ const checkCostcoAvailability = async (user, pass, zip) => {
 
     } catch (error) {
         console.log('Error: main - ' + error);
-        await page.screenshot({ path: '/tmp/' + profileName + '-' + new Date().getTime() });
+        await page.screenshot({ path: '/tmp/' + profileName + '-' + (new Date().getTime())  + '.png'});
     }
 
     try {
@@ -60,6 +58,14 @@ const checkCostcoAvailability = async (user, pass, zip) => {
         console.log('Error: closing - ' + er);
     }
 };
+
+async function checkTime(page, timeSelector) {
+    await page.waitForSelector(timeSelector, { visible: true, timeout: 15000 });
+    await clickLinkOrButton(page, timeSelector);
+
+    // const deliveryText = await page.evaluate((timeSelector) => document.querySelector(timeSelector).textContent, timeSelector);
+    // console.log('TimeFound : ' + deliveryText + ' - ' + storeName);
+}
 
 async function login(page, username, password, zip) {
     const zipcodeSelector = '#signup-zipcode';

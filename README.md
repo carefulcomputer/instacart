@@ -25,3 +25,15 @@ node instacart.js <storename> <username> <password> <zip>
 ```
 
 where storename is store's name in instacart url... e.g. foodmaxx, safeway, smart-final
+
+If no time is found, script will output 
+
+```
+<storeName> time not found
+```
+
+and if time is found then it will output
+
+```
+<storeName> Times not found :::: <list of days and times found>
+```

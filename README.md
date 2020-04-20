@@ -40,3 +40,6 @@ and if time is found then it will output
 ```
 <storeName> Times Found: ::: <list of days and times found>
 ```
+
+Disclaimer: Use at your own risk. This code doesn't come with any gurantee/warranty.
+License: Free for personal use, and further extension as long as attribution is provided. Not for commercial use.

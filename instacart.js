@@ -1,5 +1,30 @@
 const puppeteer = require('puppeteer');
 
+
+const getTimes = async (page, storeName) => {
+    const url = 'https://www.instacart.com/v3/containers/' + storeName + '/next_gen/retailer_information/content/delivery?source=web';
+    const response = await page.goto(url, { waitUntil: 'networkidle2' });
+    // found response.. now check if there is time
+    if (response.headers().status == 200) {
+        var storeTimes = await page.evaluate(() => {
+            return JSON.parse(document.querySelector("body").innerText); ç
+        });
+        
+        const allDays = storeTimes.container.modules.filter(node => { return node.data.service_options && node.data.service_options.service_options && node.data.service_options.service_options.days });
+        const daysFound = allDays[0].data.service_options.service_options.days.filter(day => {
+            return (day.options && day.options.length > 0)
+        }); // if any element found
+        if (daysFound && daysFound.length > 0) {
+            return daysFound;
+        } else {
+            return [];
+        }
+    } else {
+        //console.log('unauthorized. so returning null');
+        return null;
+    }
+};
+
 const checkDateAvailability = async (storeName, user, pass, zip) => {
 
     var myArgs = process.argv.slice(2);
@@ -32,45 +57,36 @@ const checkDateAvailability = async (storeName, user, pass, zip) => {
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36')
 
-    //await page.setViewport({ width: 1650, height: 800 });
     await page.setViewport({ width: 1366, height: 1024 });
 
 
     try {
-        await page.goto('https://www.instacart.com/store/' + storeName + '/storefront'), { waitUntil: 'networkidle2' };
-
-        await page.waitFor(3000);
-        const timeSelector = 'a[href^="/' + storeName + '/info?tab=delivery"]>span';
-        const zipSelector = '#address_line_1';
-
-        const navigationOutcome = await checkAnySelector(page, [zipSelector, timeSelector]);
-
-        switch (navigationOutcome) {
-            case zipSelector:
-                await login(page, user, pass, zip);
-                // check if logged in.
-                let checkIfLoggedIn = await checkAnySelector(page, [zipSelector, timeSelector]);
-                if (checkIfLoggedIn == zipSelector) {
-                    await login(page, user, pass, zip);
-                }
-            // fall through after login
-            case timeSelector:
-                // check date 
-                await page.goto('https://www.instacart.com/store/' + storeName + '/storefront'), { waitUntil: 'networkidle2' };
-                await page.waitForSelector(timeSelector, { visible: true, timeout: 15000 });
-                const deliveryText = await page.evaluate((storeName, timeSelector) => document.querySelector(timeSelector).textContent, storeName, timeSelector);
-                console.log('TimeFound : ' + deliveryText + ' - ' + storeName);
-                break;
-            default:
-                console.log('Error');
-            // error
+        let foundDays = await getTimes(page, storeName);
+        if (!foundDays) { // if not logged in then there won't be any 
+            await login(storeName, page, user, pass, zip); // logged in
+            foundDays = await getTimes(page, storeName); // days found
         }
+        if (foundDays && foundDays.length > 0) {
+            let days = foundDays.reduce((str, day) => {
+                // get times
+                let times = day.options.reduce((dayStr, timeObj) => {
+                    //console.log(JSON.stringify(times));
+                    dayStr += timeObj.green_window + ', ';
+                    return dayStr;
+                }, (day.date || 'Flexible ') + ' : ');
+                //console.log('times are ' + times);
 
-        //
+                return (str + ' ::::: ' + times);
+            }, (storeName + ' Times Found: '));
+
+            console.log(days);
+        } else {
+            console.log(storeName + ' time not found');
+        }
 
     } catch (error) {
         console.log('Error: main - ' + profileName + '  : ' + error);
-        await page.screenshot({ path: '/tmp/' + profileName + '-' + (new Date().getTime())  + '.png'});
+        await page.screenshot({ path: '/tmp/' + profileName + '-' + (new Date().getTime()) + '.png' });
     }
     try {
         await page.close();
@@ -81,41 +97,34 @@ const checkDateAvailability = async (storeName, user, pass, zip) => {
     }
 };
 
-async function login(page, username, password, zip) {
+async function login(storeName, page, username, password, zip) {
+    await page.goto('https://www.instacart.com/store/' + storeName + '/storefront', { waitUntil: 'networkidle2' });    
     const zipcodeSelector = '#address_line_1';
     await enterText(page, zipcodeSelector, zip + String.fromCharCode(13));
     await clickByText(page, 'Log in', 'span'); // login link    
     await enterText(page, 'input[name="nextgen-authenticate.all.log_in_email"][type="email"]', username); // user field
-    await page.waitFor(2000);
+    await page.waitFor(1000);
     await enterText(page, 'input[name="nextgen-authenticate.all.log_in_password"][type="password"]', password); // password field
-    await page.waitFor(2000);
+    await page.waitFor(1000);
     await clickLinkOrButton(page, '#main-content > div.rmq-766c96d2 > form > div:nth-child(6) > button');
+    const cartSelector = 'button[aria-label^="View Cart"]';
+    await page.waitForSelector(cartSelector, {timeout: 30000 });
 }
 
-const checkAnySelector = async (page, selectors) => {
-    const jsHandle = await page.waitForFunction((selectors) => {
-        for (const selector of selectors) {
-            if (document.querySelector(selector) !== null) {
-                return selector;
-            }
-        }
-        return false;
-    }, { visible: true, timeout: 15000 }, selectors);
-
-    const selector = await jsHandle.jsonValue();
-    return selector;
-
+async function clickLinkOrButton(frame, selector) {
+    await frame.waitForSelector(selector, { visible: true, timeout: 20000 })
+    await frame.hover(selector)
+    const button = await frame.$(selector);
+    await button.click();
 }
 
-const clickButtonByText = async (page, text) => {
-    const xpath = "//button[contains(., '" + text + "')]";
-    const [button] = await page.$x(xpath);
-    console.log('found button ' + button);
-    if (button) {
-        await button.click();
-    } else {
-        console.log('button not found');
-    }
+async function enterText(page, selector, textToEnter) {
+    //console.log('text to enter: ' + textToEnter );
+    await page.waitForSelector(selector, { visible: true, timeout: 10000 })
+    const textBox = await page.$(selector);
+    await textBox.focus();
+    //await page.evaluate((val, selector) => document.querySelector(selector).value = val, textToEnter, selector);
+    await page.keyboard.type(textToEnter);
 }
 
 const clickByText = async function (page, text, element) {
@@ -136,75 +145,5 @@ const clickByText = async function (page, text, element) {
     }
     throw new Error(`Link not found: ${text}`);
 };
-
-async function clickDelivery(page) {
-    //await page.waitForSelector('a[href="/costco/info?tab=delivery"]', { timeout: 15000 })
-    await clickLinkOrButton(page, 'a[href="/costco/info?tab=delivery"]');
-}
-
-async function clickMouse(page, frame, selector) {
-    await frame.waitForSelector(selector, { visible: true, timeout: 5000 })
-    await frame.hover(selector)
-    const button = await frame.$(selector);
-
-    const rect = await frame.evaluate((button) => {
-        const { top, left, bottom, right } = button.getBoundingClientRect();
-        return { top, left, bottom, right };
-    }, button);
-    console.log('button coords are ' + (rect.top + 5) + ':' + (rect.left + 5));
-    page.mouse.click(rect.top + 5, rect.left + 5)
-}
-
-async function clickLinkOrButton(frame, selector) {
-    await frame.waitForSelector(selector, { visible: true, timeout: 20000 })
-    await frame.hover(selector)
-    const button = await frame.$(selector);
-    await button.click();
-}
-
-async function enterText(page, selector, textToEnter) {
-    //console.log('text to enter: ' + textToEnter );
-    await page.waitForSelector(selector, { visible: true, timeout: 10000 })
-    const textBox = await page.$(selector);
-    await textBox.focus();
-    //await page.evaluate((val, selector) => document.querySelector(selector).value = val, textToEnter, selector);
-    await page.keyboard.type(textToEnter);
-}
-
-async function enterTextInFrame(page, frame, selector, textToEnter) {
-    await frame.waitForSelector(selector, { visible: true, timeout: 5000 })
-    const textBox = await frame.$(selector);
-    await textBox.focus();
-    await page.keyboard.type(textToEnter);
-}
-
-
-async function recursiveFindInFrames(inputFrame, selector) {
-    const frames = inputFrame.childFrames();
-    const results = await Promise.all(
-        frames.map(async frame => {
-            const el = await frame.$(selector);
-            if (el) {
-                console.log('found ' + selector + ' in frame ' + frame.name());
-                return el;
-            }
-            if (frame.childFrames().length > 0) {
-                return await recursiveFindInFrames(frame, selector);
-            }
-            return null;
-        })
-    );
-    return results.find(Boolean);
-}
-
-async function findInFrames(page, selector) {
-    const result = await recursiveFindInFrames(page.mainFrame(), selector);
-    if (!result) {
-        throw new Error(
-            `The selector \`${selector}\` could not be found in any child frames.`
-        );
-    }
-    return result;
-}
 
 checkDateAvailability();

@@ -6,12 +6,18 @@ This script is open source so feel free to use as you deem fit (except for comme
 
 ## Installation
 
-Download this repo and run following command. (Assuming you have nodejs already installed. If not install it from here . https://nodejs.org/en/download/ )
+Download this repo.
+1. Select 'Clone or donwload' from upper right side of this page.
+2. Click 'Download ZIP'
+3. Unzip the downloaded file.
+4. Open terminal command and change to unzipped folder.
+5. Run following command. (Assuming you have nodejs already installed. If not install it from here . https://nodejs.org/en/download/ )
 
 ```
 npm install
 ```
 
+Now this code is ready to be run.
 
 ## Usage
 You will need to enter command line args.

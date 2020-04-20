@@ -16,7 +16,7 @@ Follow these steps to install this code -
 ```
 npm install
 ```
-It should install all prerequisites. 
+This command would install all prerequisites and show things like this on screen. 
 ```
 > puppeteer@3.0.0 install....
 ```

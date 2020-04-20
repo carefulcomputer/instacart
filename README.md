@@ -6,7 +6,8 @@ This script is open source so feel free to use as you deem fit (except for comme
 
 ## Installation
 
-checkout repo and run following command (assuming you have nodejs already installed)
+Download this repo and run following command. (Assuming you have nodejs already installed. If not install it from here . https://nodejs.org/en/download/ )
+
 ```
 npm install
 ```

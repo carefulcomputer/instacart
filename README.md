@@ -11,7 +11,7 @@ Follow these steps to install this code -
 2. Click 'Download ZIP'
 3. Unzip the downloaded file.
 4. Open terminal command (windows/mac/linux) and change to unzipped folder.
-5. Run following command. (Assuming you have nodejs already installed. If not install it from here . https://nodejs.org/en/download/ )
+5. Run following command. (Assuming you have nodejs already installed. If not install it from here. https://nodejs.org/en/download/)
 
 ```
 npm install

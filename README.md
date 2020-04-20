@@ -35,5 +35,5 @@ If no time is found, script will output
 and if time is found then it will output
 
 ```
-<storeName> Times not found :::: <list of days and times found>
+<storeName> Times Found: ::: <list of days and times found>
 ```

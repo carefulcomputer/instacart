@@ -7,7 +7,7 @@ const getTimes = async (page) => {
     // found response.. now check if there is time
     if (response.headers().status == 200) {
         var costcoTimes = await page.evaluate(() => {
-            return JSON.parse(document.querySelector("body").innerText);ç
+            return JSON.parse(document.querySelector("body").innerText);
         });
         const allDays = costcoTimes.service_options.days;
         const daysFound = allDays.filter(day => {

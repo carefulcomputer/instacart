@@ -6,18 +6,22 @@ This script is open source so feel free to use as you deem fit (except for comme
 
 ## Installation
 
-Download this repo.
-1. Select 'Clone or donwload' from upper right side of this page.
+Follow these steps to install this code -
+1. Click green 'Clone or donwload' button from upper right side of this page.
 2. Click 'Download ZIP'
 3. Unzip the downloaded file.
-4. Open terminal command and change to unzipped folder.
+4. Open terminal command (windows/mac/linux) and change to unzipped folder.
 5. Run following command. (Assuming you have nodejs already installed. If not install it from here . https://nodejs.org/en/download/ )
 
 ```
 npm install
 ```
-
-Now this code is ready to be run.
+It should install all prerequisites. 
+```
+> puppeteer@3.0.0 install....
+```
+It might take some time so wait for it to finish and get back to command line.
+Once it is back on command line this code is ready to be run. 
 
 ## Usage
 You will need to enter command line args.

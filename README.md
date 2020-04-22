@@ -37,7 +37,7 @@ node costco.js <username> <password> <zip>
 ### For India Cash n Carry script -
 
 ```
-node <username> <password>
+node indiaCashnCarry.js <username> <password>
 ```
 
 ### For instacart script -

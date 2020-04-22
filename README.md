@@ -8,12 +8,11 @@ These scripts areopen source so feel free to use as you deem fit (except for com
 
 Follow these steps to install this code -
 1. Install nodejs if you don't have it already ( https://nodejs.org/en/download/). If you don't know, you don't have it.
-2. Install npm if you don't have it already ( https://www.npmjs.com/get-npm ). If you don't know, you don't have it.
-3. Click green 'Clone or donwload' button from upper right side of this page.
-4. Click 'Download ZIP'
-5. Unzip the downloaded file.
-6. Open terminal command (windows/mac/linux) and change to unzipped folder.
-7. Run following command. 
+2. Click green 'Clone or donwload' button from upper right side of this page.
+3. Click 'Download ZIP'
+4. Unzip the downloaded file.
+5. Open terminal command (windows/mac/linux) and change to unzipped folder.
+6. Run following command. 
 
 ```
 npm install

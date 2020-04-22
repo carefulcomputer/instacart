@@ -1,5 +1,5 @@
 {
-  "name": "instacart",
+  "name": "instacard",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.19.2",
     "puppeteer": "^3.0.0"
   }
 }
